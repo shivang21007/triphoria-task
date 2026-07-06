@@ -2,7 +2,6 @@
 .terraform/
 *.tfstate
 *.tfstate.*
-.terraform.lock.hcl
 *.tfvars
 !*.tfvars.example
 backend.hcl
@@ -23,6 +22,4 @@ backups/
 # os
 .DS_Store
 
-# keep assessment doc local if you want (optional - not ignoring md anymore)
-# DevOps Assessment_ Terraform + Database Reliability.md
 plan/*
