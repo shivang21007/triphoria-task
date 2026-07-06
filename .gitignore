@@ -22,4 +22,4 @@ backups/
 # os
 .DS_Store
 
-plan/*
+plan/**.md
