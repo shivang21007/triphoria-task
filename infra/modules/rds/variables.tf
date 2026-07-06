@@ -65,9 +65,15 @@ variable "multi_az" {
 }
 
 variable "skip_final_snapshot" {
-  description = "Skip final snapshot on destroy (dev only)"
+  description = "Skip final snapshot on destroy (use false in prod)"
   type        = bool
   default     = true
+}
+
+variable "final_snapshot_identifier" {
+  description = "Snapshot name when skip_final_snapshot is false"
+  type        = string
+  default     = null
 }
 
 variable "tags" {

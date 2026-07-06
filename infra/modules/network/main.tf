@@ -1,12 +1,9 @@
 data "aws_availability_zones" "available" {
-  count = length(var.availability_zones) > 0 ? 0 : 1
-
   state = "available"
 }
 
 locals {
-  discovered_azs = length(var.availability_zones) > 0 ? var.availability_zones : data.aws_availability_zones.available[0].names
-  azs            = slice(local.discovered_azs, 0, var.az_count)
+  azs = slice(data.aws_availability_zones.available.names, 0, var.az_count)
 
   public_subnet_cidrs = [
     for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 8, i)

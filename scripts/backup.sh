@@ -10,8 +10,6 @@ if [[ -f "$ENV_FILE" ]]; then
   source "$ENV_FILE"
 fi
 
-MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
-MYSQL_PORT="${MYSQL_PORT:-3306}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-triphoria}"
 MYSQL_USER="${MYSQL_USER:-triphoria}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-triphoria}"
@@ -22,16 +20,15 @@ BACKUP_FILE="${BACKUP_DIR}/triphoria_${TIMESTAMP}.sql.gz"
 
 echo "Creating backup: ${BACKUP_FILE}"
 
-mysqldump \
-  -h "$MYSQL_HOST" \
-  -P "$MYSQL_PORT" \
+docker compose -f "${ROOT_DIR}/docker-compose.yml" exec -T db \
+  mysqldump \
   -u "$MYSQL_USER" \
   -p"$MYSQL_PASSWORD" \
   --single-transaction \
+  --no-tablespaces \
   --routines \
   --triggers \
-  "$MYSQL_DATABASE" \
-  | gzip > "$BACKUP_FILE"
+  "$MYSQL_DATABASE" | gzip > "$BACKUP_FILE"
 
 echo "Backup created successfully."
 ls -lh "$BACKUP_FILE"
