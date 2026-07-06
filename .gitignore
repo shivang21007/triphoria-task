@@ -1,0 +1,28 @@
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+backend.hcl
+!backend.hcl.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# env / secrets
+.env
+
+# db backups
+backups/
+*.sql.gz
+
+# os
+.DS_Store
+
+# keep assessment doc local if you want (optional - not ignoring md anymore)
+# DevOps Assessment_ Terraform + Database Reliability.md
+plan/*
