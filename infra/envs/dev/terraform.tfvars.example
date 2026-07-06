@@ -1,0 +1,16 @@
+aws_region               = "us-east-1"
+project_name             = "triphoria"
+environment              = "dev"
+vpc_cidr                 = "10.0.0.0/16"
+availability_zones       = ["us-east-1a", "us-east-1b"]
+single_nat_gateway       = true
+db_password              = "change-me-dev-only"
+db_instance_class        = "db.t3.micro"
+db_allocated_storage     = 20
+db_backup_retention_period = 3
+db_deletion_protection   = false
+db_multi_az              = false
+ecs_cpu                  = 256
+ecs_memory               = 512
+ecs_desired_count        = 1
+container_image          = "nginx:1.27-alpine"

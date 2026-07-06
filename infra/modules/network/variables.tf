@@ -9,6 +9,12 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "availability_zones" {
+  description = "Optional explicit AZ names; when empty, AZs are discovered from AWS"
+  type        = list(string)
+  default     = []
+}
+
 variable "az_count" {
   description = "Number of availability zones to use"
   type        = number
