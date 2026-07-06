@@ -10,42 +10,56 @@ if [[ -f "$ENV_FILE" ]]; then
   source "$ENV_FILE"
 fi
 
-MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
-MYSQL_PORT="${MYSQL_PORT:-3306}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-triphoria}"
-RESTORE_DATABASE="${RESTORE_DATABASE:-triphoria_restore}"
 MYSQL_USER="${MYSQL_USER:-triphoria}"
-MYSQL_PASSWORD="${MYSQL_PASSWORD:-triphoria}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-rootsecret}"
 
 BACKUP_FILE="${1:-}"
-
 if [[ -z "$BACKUP_FILE" ]]; then
   BACKUP_FILE="$(ls -1t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | head -n 1 || true)"
+  if [[ -n "$BACKUP_FILE" ]]; then
+    echo "No backup specified — using latest: ${BACKUP_FILE}"
+  fi
+else
+  echo "Using specified backup: ${BACKUP_FILE}"
 fi
 
 if [[ -z "$BACKUP_FILE" || ! -f "$BACKUP_FILE" ]]; then
   echo "Usage: $0 [path/to/backup.sql.gz]" >&2
-  echo "No backup file found in ${BACKUP_DIR}" >&2
   exit 1
 fi
 
-echo "Restoring from: ${BACKUP_FILE}"
-echo "Target database: ${RESTORE_DATABASE}"
+SQL_FILE="${BACKUP_DIR}/restore.sql"
+trap 'rm -f "$SQL_FILE"' EXIT
 
-mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u root -p"$MYSQL_ROOT_PASSWORD" -e \
-  "DROP DATABASE IF EXISTS \`${RESTORE_DATABASE}\`; CREATE DATABASE \`${RESTORE_DATABASE}\`;"
+echo "Extracting ${BACKUP_FILE} -> ${SQL_FILE}"
+gunzip -c "$BACKUP_FILE" > "$SQL_FILE"
 
-gunzip -c "$BACKUP_FILE" | mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u root -p"$MYSQL_ROOT_PASSWORD" "$RESTORE_DATABASE"
+if [[ ! -s "$SQL_FILE" ]]; then
+  echo "Error: extracted SQL file is empty." >&2
+  exit 1
+fi
 
-mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "
-  SELECT '${MYSQL_DATABASE}' AS db_name, COUNT(*) AS bookings FROM \`${MYSQL_DATABASE}\`.hotel_bookings
-  UNION ALL
-  SELECT '${RESTORE_DATABASE}' AS db_name, COUNT(*) AS bookings FROM \`${RESTORE_DATABASE}\`.hotel_bookings;
+for table in hotel_bookings booking_events; do
+  if ! grep -q "$table" "$SQL_FILE"; then
+    echo "Error: SQL dump does not contain table '${table}'." >&2
+    exit 1
+  fi
+done
 
-  SELECT '${MYSQL_DATABASE}' AS db_name, COUNT(*) AS events FROM \`${MYSQL_DATABASE}\`.booking_events
-  UNION ALL
-  SELECT '${RESTORE_DATABASE}' AS db_name, COUNT(*) AS events FROM \`${RESTORE_DATABASE}\`.booking_events;
-"
+echo "SQL dump looks valid ($(wc -l < "$SQL_FILE" | tr -d ' ') lines)"
 
-echo "Restore complete. Compare row counts above — they should match."
+echo "Dropping and recreating database: ${MYSQL_DATABASE}"
+docker compose -f "${ROOT_DIR}/docker-compose.yml" exec -T db \
+  mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e \
+  "DROP DATABASE IF EXISTS \`${MYSQL_DATABASE}\`; CREATE DATABASE \`${MYSQL_DATABASE}\`; GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%'; FLUSH PRIVILEGES;"
+
+echo "Restoring into ${MYSQL_DATABASE}..."
+docker compose -f "${ROOT_DIR}/docker-compose.yml" exec -T db \
+  mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < "$SQL_FILE"
+
+docker compose -f "${ROOT_DIR}/docker-compose.yml" exec -T db \
+  mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e \
+  "SELECT COUNT(*) AS booking_count FROM hotel_bookings; SELECT COUNT(*) AS event_count FROM booking_events;"
+
+echo "Restore complete."

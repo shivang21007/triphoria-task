@@ -35,9 +35,10 @@ variable "single_nat_gateway" {
 }
 
 variable "db_password" {
-  description = "RDS master password"
+  description = "RDS master password. Override via terraform.tfvars or TF_VAR_db_password."
   type        = string
   sensitive   = true
+  default     = "temp"
 }
 
 variable "db_instance_class" {
