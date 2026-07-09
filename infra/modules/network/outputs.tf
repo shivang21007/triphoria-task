@@ -32,3 +32,8 @@ output "availability_zones" {
   description = "AZs used by this module"
   value       = local.azs
 }
+
+output "nat_gateway_ids" {
+  description = "NAT gateway IDs used by private subnets"
+  value       = aws_nat_gateway.main[*].id
+}

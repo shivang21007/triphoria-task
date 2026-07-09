@@ -23,7 +23,19 @@ output "alb_arn" {
   value       = aws_lb.main.arn
 }
 
+output "alb_listener_arn" {
+  description = "ALB HTTP listener ARN"
+  value       = aws_lb_listener.http.arn
+}
+
+output "log_group_name" {
+  description = "CloudWatch log group for ECS tasks"
+  value       = aws_cloudwatch_log_group.ecs.name
+}
+
 output "target_group_arn" {
   description = "Target group ARN"
   value       = aws_lb_target_group.main.arn
 }
+
+

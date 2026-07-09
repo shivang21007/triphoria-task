@@ -23,3 +23,13 @@ output "rds_port" {
   description = "RDS port"
   value       = module.rds.db_port
 }
+
+output "ecs_log_group_name" {
+  description = "CloudWatch log group for ECS tasks"
+  value       = module.ecs.log_group_name
+}
+
+output "nat_gateway_ids" {
+  description = "NAT gateway IDs in the VPC"
+  value       = module.network.nat_gateway_ids
+}

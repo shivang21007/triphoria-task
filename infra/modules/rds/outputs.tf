@@ -18,3 +18,8 @@ output "db_name" {
   description = "Database name"
   value       = aws_db_instance.main.db_name
 }
+
+output "db_instance_arn" {
+  description = "RDS instance ARN"
+  value       = aws_db_instance.main.arn
+}
